@@ -4,5 +4,6 @@ frabec = Francesca Bechis <Francesca.Bechis@mpi.nl>
 andsmi = Andrew Smith <Andrew.Smith@mpi.nl>
 alekoe = Alexander Koenig <Alexander.Koenig@mpi.nl>
 sauciv = Sauro Civitillo <Sauro.Civitillo@mpi.nl>
+janvoe = Janna Völpel <Janna.Voelpel@mpi.nl>
 (no author) = Unknown <tla-dev@mpi.nl>
 
