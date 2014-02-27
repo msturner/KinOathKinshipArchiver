@@ -22,6 +22,7 @@ githubApiUrl = 'https://api.github.com'
 milestoneUrl = githubApiUrl + '/repos/%s/%s/milestones' % (githubProject, githubRepository)
 issuesUrl = githubApiUrl + '/repos/%s/%s/issues' % (githubProject, githubRepository)
 print(milestoneUrl)
+print(issuesUrl)
 
 knownMilestones = []
 
@@ -54,10 +55,31 @@ def getMileStoneId(milestoneTitle):
         time.sleep(1)
     return knownMilestones.index(milestoneTitle)
 
-def makeIssueRequest(data):
-    print(data)
+def createRequiredEmptyTickets(tracTicketCount):
+    print 'total ticket count: ', tracTicketCount
+    response = urllib.urlopen(issuesUrl)
+    content = response.read()
+    tickets = json.loads(content)
+    #print(tickets)
+    currentIssueCount = tickets[0]['number']
+    while tracTicketCount > currentIssueCount:
+        currentIssueCount = currentIssueCount + 1
+        makeEmptyIssueRequest()
+
+def makeEmptyIssueRequest():
+    data=json.dumps({'title': 'dummy ticket to allow imports with the correct ticket id'})
     datalength = len(data)
     request = urllib2.Request(issuesUrl, data, {'Content-Type': 'application/json', 'Content-Length': datalength})
+    request.add_header('Authorization', 'Basic %s' % base64string)
+    response = urllib2.urlopen(request)
+    print(response)
+    time.sleep(1)
+
+def makeIssueRequest(ticketId, data):
+    print (ticketId)
+    print(data)
+    datalength = len(data)
+    request = urllib2.Request(issuesUrl + '/' + ticketId, data, {'Content-Type': 'application/json', 'Content-Length': datalength})
     request.add_header('Authorization', 'Basic %s' % base64string)
     response = urllib2.urlopen(request)
     print(response)
@@ -70,28 +92,33 @@ base64string = encodestring('%s:%s' % (githubUsername, githubToken)).replace('\n
 
 tracCSV = urllib.urlopen(tracCsvUrl)
 tracTickets = csv.DictReader(tracCSV)
-tickets = []
+
 # print(tracTickets)
 # create any missing milestones
 print 'adding milestones'
+tracTicketCount = 0
 for ticket in tracTickets:
+    tracTicketCount = tracTicketCount + 1
     milestoneId = getMileStoneId(ticket['milestone'])
 # make sure the milestone list is up to date
 getAllMileStones()
 print 'adding tickets'
+createRequiredEmptyTickets(tracTicketCount)
 # insert the tickets as issues
 tracCSV = urllib.urlopen(tracCsvUrl)
 tracTickets = csv.DictReader(tracCSV)
+currentTicket = 0
 for ticket in tracTickets:
-    #print (ticket)
+    #print (ticket)    
+    currentTicket = currentTicket + 1
     milestoneId = getMileStoneId(ticket['milestone'])
     print 'milestone: ', milestoneId
-    data=json.dumps({'title': ticket['summary'], 'body': ticket['description'], 'milestone': milestoneId,
+    if ticket['status'] == 'closed':
+        status = 'closed'
+    else:
+        status = 'open'
+    data=json.dumps({'title': ticket['summary'], 'body': ticket['description'], 'milestone': milestoneId, "state": status,
     'labels': [ticket['component'], ticket['type'], ticket['priority'], ticket['resolution']]})
     # so far unused fields: col=id& &col=time &col=changetime &col=reporter &col=keywords &col=cc 'assignee': ticket['owner'], , ticket['version']
-    makeIssueRequest(data)
-    #if ticket['status'] == 'closed':
-    #    data=json.dumps({'title': ticket['summary'], "state": "closed"})
-    #    makeIssueRequest(data)
-
+    makeIssueRequest(str(currentTicket), data) # ticket['id']
 exit(0)
