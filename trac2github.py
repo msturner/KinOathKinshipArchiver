@@ -112,13 +112,17 @@ for ticket in tracTickets:
     #print (ticket)    
     currentTicket = currentTicket + 1
     milestoneId = getMileStoneId(ticket['milestone'])
-    print 'milestone: ', milestoneId
+    #print 'milestone: ', milestoneId
     if ticket['status'] == 'closed':
         status = 'closed'
     else:
         status = 'open'
-    data=json.dumps({'title': ticket['summary'], 'body': ticket['description'], 'milestone': milestoneId, "state": status,
-    'labels': [ticket['component'], ticket['type'], ticket['priority'], ticket['resolution']]})
+    if milestoneId == 0:
+        # if there is no milestone then we must not pass it as a parameter
+        data=json.dumps({'title': ticket['summary'], 'body': ticket['description'].strip(), "state": status, 'labels': [ticket['component'], ticket['type'], ticket['priority'], ticket['resolution']]})
+    else:
+        data=json.dumps({'title': ticket['summary'], 'body': ticket['description'].strip(), 'milestone': milestoneId, "state": status, 'labels': [ticket['component'], ticket['type'], ticket['priority'], ticket['resolution']]})
     # so far unused fields: col=id& &col=time &col=changetime &col=reporter &col=keywords &col=cc 'assignee': ticket['owner'], , ticket['version']
+    #if currentTicket > 223: # ticket 224 has issues that are as yet un identified, ticket 147 is the fist one to not have a milestone
     makeIssueRequest(str(currentTicket), data) # ticket['id']
 exit(0)
